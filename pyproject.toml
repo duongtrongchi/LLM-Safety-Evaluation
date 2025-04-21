@@ -1,0 +1,25 @@
+[project]
+name = "src"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Trong-Chi Duong"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = "~3.12"
+dependencies = [
+    "transformers (>=4.51.3,<5.0.0)",
+    "datasets (>=3.5.0,<4.0.0)",
+    "accelerate (>=1.6.0,<2.0.0)",
+    "bitsandbytes (>=0.45.5,<0.46.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)",
+    "numpy (<2)",
+    "unsloth (>=2025.3.19,<2026.0.0)",
+    "loguru (>=0.7.3,<0.8.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
