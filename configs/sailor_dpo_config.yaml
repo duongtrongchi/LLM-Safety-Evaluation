@@ -1,3 +1,48 @@
-dataset_id: DuongTrongChi/dpo-unsloth
-model_id: sail/Sailor-1.8B-Chat
+model:
+  name: "unsloth/Qwen2.5-1.5B-Instruct"
+  max_seq_length: 2048
+  dtype: null  
+  load_in_4bit: True
+  load_in_8bit: False
+  full_finetuning: False
 
+datasets:
+  sources:
+    DuongTrongChi/dpo-unsloth: 0.2 #0.005 # 0.5% sampled
+  splits: ["train"]
+  preprocessing:
+    num_proc: 2
+    # task: "dpo"
+
+lora:
+  r: 64
+  lora_alpha: 64
+  lora_dropout: 0
+  bias: "none"
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  use_gradient_checkpointing: "unsloth"
+  random_state: 3407
+
+training:
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16
+  warmup_ratio: 0.1
+  num_train_epochs: 1
+  fp16: true  # This should be set dynamically based on hardware in code
+  bf16: false # This too
+  logging_steps: 1
+  optim: "adamw_8bit"
+  seed: 42
+  output_dir: "outputs"
+
+dpo:
+  beta: 0.1
+  max_length: 1024
+  max_prompt_length: 512

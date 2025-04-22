@@ -1,4 +1,5 @@
 INFERENCE_SCRIPT=src/inference.py
+DPO_SCRIPT=src/dpo_training.py
 
 # BASE MODEL
 run-vinallama-base:
@@ -30,4 +31,8 @@ run-qwen-orpo:
 run-sailor-orpo:
 	poetry run python $(INFERENCE_SCRIPT) --model_id d-llm/sailor-1.8b-orpo
 
+
+# DPO
+run-qwen-dpo:
+	poetry run python $(DPO_SCRIPT) --config configs/sailor_dpo_config.yaml
 
