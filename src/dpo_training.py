@@ -16,21 +16,31 @@ from huggingface_hub import login
 
 
 def dpo_pipeline(config_file_path: str):
+    if not os.path.exists(config_file_path):
+        raise FileNotFoundError(f"Config file not found: {config_file_path}")
+
     load_dotenv()
     config = load_yaml_config(config_file_path)
     os.environ["CUDA_VISIBLE_DEVICES"] = "0" # Optional set GPU device ID
     HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
+
+    if not HUGGINGFACE_TOKEN:
+        raise EnvironmentError("HUGGINGFACE_TOKEN not found in environment variables. Please set it in your .env file.")
+
     login(HUGGINGFACE_TOKEN)
+
+
+    modes_selected = sum([
+        int(config['model']['load_in_4bit']),
+        int(config['model']['load_in_8bit']),
+        int(config['model']['full_finetuning']),
+    ])
+    if modes_selected != 1:
+        raise ValueError("Invalid configuration: Exactly one of [load_in_4bit, load_in_8bit, full_finetuning] must be True.")
 
 
     # For full-finetuning - set full_finetuning = True  and 8-bit finetuning - set load_in_8bit = True 
     if config['model']['load_in_4bit']:
-        if config['model']['load_in_8bit'] and config['model']['full_finetuning']:
-            raise Exception(
-                "Invalid configuration: You cannot enable both 8-bit loading and full finetuning when 4-bit loading is enabled. "
-                "Choose only one method: set 'full_finetuning = True' for full finetuning, or 'load_in_8bit = True' for 8-bit finetuning."
-            )
-
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name = config['model']['name'],
             max_seq_length = config['model']['max_seq_length'],
@@ -39,12 +49,6 @@ def dpo_pipeline(config_file_path: str):
             token = HUGGINGFACE_TOKEN
         )
     elif config['model']['load_in_8bit']:
-        if config['model']['load_in_4bit'] and config['model']['full_finetuning']:
-            raise Exception(
-                "Invalid configuration: You cannot enable both 4-bit loading and full finetuning when 8-bit loading is enabled. "
-                "Choose only one method: set 'full_finetuning = True' for full finetuning, or 'load_in_4bit = True' for 4-bit finetuning."
-            )
-
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name = config['model']['name'],
             max_seq_length = config['model']['max_seq_length'],
@@ -53,17 +57,11 @@ def dpo_pipeline(config_file_path: str):
             token = HUGGINGFACE_TOKEN
         )
     elif config['model']['full_finetuning']:
-        if config['model']['load_in_8bit'] and config['model']['load_in_4bit']:
-            raise Exception(
-                "Invalid configuration: You cannot enable both 8-bit loading and 4-bit when full finetuning loading is enabled. "
-                "Choose only one method: set 'load_in_4bit = True' for 4-bit finetuning, or 'load_in_8bit = True' for 8-bit finetuning."
-            )
-
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name = config['model']['name'],
             max_seq_length = config['model']['max_seq_length'],
             dtype = config['model']['dtype'],
-            full_finetuning = config['model']['load_in_8bit'],
+            full_finetuning = config['model']['full_finetuning'],
             token = HUGGINGFACE_TOKEN
         )
 
