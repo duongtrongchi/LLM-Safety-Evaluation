@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from loguru import logger
 
 from transformers import TrainingArguments
-from trl import DPOTrainer
+from trl import DPOTrainer, DPOConfig
 from unsloth import FastLanguageModel, PatchDPOTrainer
 from unsloth import is_bfloat16_supported
 PatchDPOTrainer()
@@ -107,7 +107,7 @@ def dpo_pipeline(config_file_path: str):
     dpo_trainer = DPOTrainer(
         model = model,
         ref_model = None,
-        args = TrainingArguments(
+        args = DPOConfig(
             per_device_train_batch_size = config['training']['per_device_train_batch_size'],
             gradient_accumulation_steps = config['training']['gradient_accumulation_steps'],
             warmup_ratio = config['training']['warmup_ratio'],
@@ -118,15 +118,17 @@ def dpo_pipeline(config_file_path: str):
             optim = config['training']['optim'],
             seed = config['training']['seed'],
             output_dir = config['training']['output_dir'],
+            beta = config['dpo']['beta'],
+            max_length = config['dpo']['max_length'],
+            max_prompt_length = config['dpo']['max_prompt_length'],
         ),
-        beta = config['dpo']['beta'],
         train_dataset = raw_datasets['train'],
         # eval_dataset = YOUR_DATASET_HERE,
         tokenizer = tokenizer,
-        max_length = config['dpo']['max_length'],
-        max_prompt_length = config['dpo']['max_prompt_length'],
+
     )
 
+ 
     dpo_trainer.train()
 
 

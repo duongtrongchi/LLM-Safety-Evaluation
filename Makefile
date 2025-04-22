@@ -34,5 +34,5 @@ run-sailor-orpo:
 
 # DPO
 run-qwen-dpo:
-	poetry run python $(DPO_SCRIPT) --config configs/sailor_dpo_config.yaml
+	poetry run python $(DPO_SCRIPT) --config configs/qwen_dpo_config.yaml
 
