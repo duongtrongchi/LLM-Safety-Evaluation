@@ -1,0 +1,13 @@
+model:
+  id: "meta-llama/Llama-Guard-3-8B-INT8"
+  device: "cuda"
+  dtype: "bfloat16"
+  quantization_8bit: True
+
+paths:
+  input_file: '/teamspace/studios/this_studio/LLM-Safety-Evaluation/result/sailor-1.8b-orpo 23-04-2025 02_50_52.jsonl'
+  output_dir: "./result/stage_2/"
+
+moderation:
+  max_new_tokens: 100
+  pad_token_id: 0

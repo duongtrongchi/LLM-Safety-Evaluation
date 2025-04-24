@@ -1,5 +1,6 @@
 import yaml
 import re
+import json
 from loguru import logger
 
 
@@ -31,4 +32,4 @@ def write_to_jsonl(data_dict, output_file_path):
 
 def clean_text(input_text):
     cleaned_text = re.sub(r'\n+', '\n', input_text)
-    return cleaned_text.strip()
+    return re.sub(r'[^\S\n]+', ' ', cleaned_text.strip())
