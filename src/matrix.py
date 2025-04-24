@@ -1,116 +1,68 @@
-import yaml
+import os
 import json
 import torch
 from tqdm import tqdm
+from datetime import datetime
 
 from transformers import (
-    AutoTokenizer,
-    AutoModelForCausalLM,
+    AutoTokenizer, 
+    AutoModelForCausalLM, 
     BitsAndBytesConfig
 )
-from datasets import load_dataset
+
+from src.utils import write_to_jsonl, clean_text
 
 
-def load_config(config_name):
-    with open(f'./configs/{config_name}') as file:
-        yaml_data = yaml.safe_load(file)
-    return yaml_data
+model_id = "meta-llama/Llama-Guard-3-8B-INT8"
+device = "cuda"
+dtype = torch.bfloat16
+
+quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype, device_map=device, quantization_config=quantization_config)
 
 
-config = load_config("config.yaml")
+def moderate(chat):
+    input_ids = tokenizer.apply_chat_template(chat, return_tensors="pt").to(device)
+    output = model.generate(input_ids=input_ids, max_new_tokens=100, pad_token_id=0)
+    prompt_len = input_ids.shape[-1]
+    return str(tokenizer.decode(output[0][prompt_len:], skip_special_tokens=True)).strip()
 
 
-class Evaluation:
-    def __init__(
-            self,
-            model_id=config['model_id'],
-            device=config['device'],
-            dtype=torch.float16,
-            bnb_4bit_quant_type=config['bnb_4bit_quant_type'],
-            bnb_4bit_use_double_quant=config['bnb_4bit_use_double_quant'],
-            load_in_4bit=config['load_in_4bit']
-    ):
-        """
-        Initialize the Evaluation class with model parameters and configurations.
-
-        :param model_id: str, the ID of the model to load
-        :param device: str, the device to use for computations (default is "cuda")
-        :param dtype: torch.dtype, the data type for computations (default is torch.float16)
-        :param bnb_4bit_quant_type: str, the quantization type for BitsAndBytes (default is "nf4")
-        :param bnb_4bit_use_double_quant: bool, whether to use double quantization (default is True)
-        :param load_in_4bit: bool, whether to load the model in 4-bit mode (default is True)
-        """
-        self.device = device
-        self.bnb_config = BitsAndBytesConfig(
-            load_in_4bit=load_in_4bit,
-            bnb_4bit_quant_type=bnb_4bit_quant_type,
-            bnb_4bit_compute_dtype=dtype,
-            bnb_4bit_use_double_quant=bnb_4bit_use_double_quant,
-        )
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            device_map=device,
-            quantization_config=self.bnb_config,
-            trust_remote_code=True
-        )
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+def extract_file_name(path):
+    filename = os.path.basename(path)
+    name, extension = os.path.splitext(filename)
+    return name.split(" ")[0]
 
 
-    def make_prediction(self, user_input):
-        """
-        make predictions based on user input
-        :param user_input: str
-        :return: list
-        """
-        input_ids = self.tokenizer.apply_chat_template(self._apply_chat_template(user_input), return_tensors="pt").to(self.device)
-        output = self.model.generate(input_ids=input_ids, max_new_tokens=100, pad_token_id=0)
-        prompt_len = input_ids.shape[-1]
-        return self.tokenizer.decode(output[0][prompt_len:], skip_special_tokens=True).split()
+def evaluation_pipeline(input_file_path: str = 'None', output_dir: str = '../result/stage_2/'):
+    if input_file_path == 'None':
+        assert "input_file_path must be provided."
+    
+    os.makedirs(output_dir, exist_ok=True)
+    
+    with open(input_file_path, 'r', encoding='utf-8') as file:
+        total_lines = sum(1 for _ in file)
+    
+    base_filename = extract_file_name(input_file_path)
+    timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+    file_path = os.path.join(output_dir, f"{base_filename}_{timestamp}.jsonl")
+    
+    with open(input_file_path, 'r', encoding='utf-8') as file:
+        for line in tqdm(file, total=total_lines, desc="Processing data"):
+            data = json.loads(line)
+            data['prompt'] = clean_text(data['prompt'])
+            data['response'] = clean_text(data['response'])
 
+            prompt_chat_format = [{"role": "user", "content": data['prompt']}]
+            response_chat_format = [{"role": "user", "content": data['response']}]
 
-    def _apply_chat_template(self, user_input, model_response=None):
-        """
-        Apply a chat template to the user input.
+            prompt_score = moderate(prompt_chat_format)
+            response_score = moderate(response_chat_format)
 
-        :param user_input: str, the input text from the user
-        :param model_response: str or None, the response from the model (default is None)
-        :return: list, the chat template with roles and content
-        """
-        if model_response:
-            return [
-                {"role": "user", "content": user_input},
-                {"role": "assistant", "content": model_response}
-            ]
+            data['prompt_score'] = prompt_score
+            data['response_score'] = response_score
 
-        return [
-            {"role": "user", "content": user_input}
-        ]
+            write_to_jsonl(data, file_path)
 
-
-
-class ToxicBenchmark:
-    def __init__(self, file_test):
-        self.model = Evaluation()
-        self.file_test = file_test
-
-
-    def run_benchmark(self, file_name='results'):
-        test_data = load_dataset(
-            'json',
-            data_files=self.file_test,
-            split='train'
-        )
-
-        for example in tqdm(test_data, desc="Processing examples"):
-            try:
-                result = self.model.make_prediction(example['response'])
-                with open(f'./{file_name}.jsonl', 'a', encoding='utf8') as f:
-                    f.write(json.dumps({
-                        "prompt": example['prompt'],
-                        "response": example['response'],
-                        "label": result
-                    }, ensure_ascii=False) + '\n')
-            except Exception as e:
-                print(f'Error: {e}')
-
-        print("Data saved successfully in file: ", file_name, ".jsonl")
