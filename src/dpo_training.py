@@ -3,11 +3,15 @@ import argparse
 from dotenv import load_dotenv
 from loguru import logger
 
-from transformers import TrainingArguments
-from trl import DPOTrainer, DPOConfig
+import comet_ml
+from comet_ml import Experiment
+
 from unsloth import FastLanguageModel, PatchDPOTrainer
 from unsloth import is_bfloat16_supported
 PatchDPOTrainer()
+from transformers import TrainingArguments
+from trl import DPOTrainer, DPOConfig
+
 
 from src.processing.data import get_datasets, apply_chat_template
 from src.utils import load_yaml_config
@@ -22,7 +26,14 @@ def dpo_pipeline(config_file_path: str):
     load_dotenv()
     config = load_yaml_config(config_file_path)
     os.environ["CUDA_VISIBLE_DEVICES"] = "0" # Optional set GPU device ID
+    
     HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
+
+    experiment = Experiment(
+        api_key=os.getenv("COMET_API_KEY"),
+        project_name="llm-safety",
+        # workspace="YOUR_WORKSPACE"
+    )
 
     if not HUGGINGFACE_TOKEN:
         raise EnvironmentError("HUGGINGFACE_TOKEN not found in environment variables. Please set it in your .env file.")
@@ -119,6 +130,7 @@ def dpo_pipeline(config_file_path: str):
             beta = config['dpo']['beta'],
             max_length = config['dpo']['max_length'],
             max_prompt_length = config['dpo']['max_prompt_length'],
+            report_to="comet_ml"
         ),
         train_dataset = raw_datasets['train'],
         # eval_dataset = YOUR_DATASET_HERE,
@@ -128,6 +140,8 @@ def dpo_pipeline(config_file_path: str):
 
  
     dpo_trainer.train()
+
+    experiment.log_model("final_model", config['training']['output_dir'])
 
 
 if __name__ == "__main__":

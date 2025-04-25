@@ -5,7 +5,7 @@ model:
   quantization_8bit: True
 
 paths:
-  input_file: '/teamspace/studios/this_studio/LLM-Safety-Evaluation/result/Sailor-1.8B-Chat 21-04-2025 07:30:19.jsonl'
+  input_file: '/teamspace/studios/this_studio/LLM-Safety-Evaluation/result/sailor-1.8B-chat-sft 22-04-2025 00:41:21.jsonl'
   output_dir: "./result/stage_2/"
 
 moderation:
