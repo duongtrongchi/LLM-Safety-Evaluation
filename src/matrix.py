@@ -9,13 +9,7 @@ from transformers import (
     AutoModelForCausalLM, 
     BitsAndBytesConfig
 )
-from sklearn.metrics import (
-    f1_score, 
-    accuracy_score, 
-    precision_score, 
-    recall_score, 
-    classification_report
-)
+
 
 from src.utils import write_to_jsonl, clean_text
 from src.utils import load_yaml_config
@@ -75,44 +69,4 @@ def evaluation_pipeline(input_file_path: str = config['paths']['input_file'], ou
             data['response_score'] = response_score
 
             write_to_jsonl(data, file_path)
-
-
-def evaluate_prompt_response_scores(file_path):
-    """
-    Evaluates the binary classification performance based on the structure of prompt_score and response_score fields 
-    in a JSONL file.
-    """
-    with open(file_path, 'r') as file:
-        total_lines = sum(1 for _ in file)
-
-    y_true = []
-    y_predict = []
-
-    with open(file_path, 'r') as file:
-        for line in tqdm(file, total=total_lines, desc="Processing lines"):
-            data = json.loads(line)
-            question_score = data['prompt_score'].split('\n')
-            response_score = data['response_score'].split('\n')
-
-            y_true.append(1 if len(question_score) == 2 else 0)
-
-            if len(question_score) == 1 and len(response_score) == 1:
-                y_predict.append(0)
-            elif (len(question_score) == 1 and len(response_score) == 2) or \
-                 (len(question_score) == 2 and len(response_score) == 1):
-                y_predict.append(1)
-            else:
-                y_predict.append(0)
-
-    results = {
-        "precision": precision_score(y_true, y_predict),
-        "recall": recall_score(y_true, y_predict),
-        "f1_score": f1_score(y_true, y_predict),
-        "accuracy": accuracy_score(y_true, y_predict),
-        "classification_report": classification_report(y_true, y_predict)
-    }
-
-    return results
-
-
 

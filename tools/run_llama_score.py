@@ -1,4 +1,4 @@
-from src.matix import evaluation_pipeline
+from src.matrix import evaluation_pipeline
 
 
 if __name__ == "__main__":

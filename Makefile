@@ -1,7 +1,7 @@
 INFERENCE_SCRIPT=src/inference.py
 DPO_SCRIPT=src/dpo_training.py
-METRIX_SCRIPT="src/matrix.py"
-
+METRIX_SCRIPT="tools/run_llama_score.py"
+CLASSIFICATION_REPORT="tools/classification_report.py"
 
 # BASE MODEL
 run-vinallama-base:
@@ -41,3 +41,6 @@ run-qwen-dpo:
 
 run-eval-process:
 	poetry run python $(METRIX_SCRIPT)
+
+run-classification-report:
+	poetry run python $(CLASSIFICATION_REPORT) --filepath /teamspace/studios/this_studio/LLM-Safety-Evaluation/result/stage_2/Qwen2-1.5B-Instruct-orpo_24-04-2025_04-10-48.jsonl
