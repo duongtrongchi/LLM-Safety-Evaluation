@@ -56,6 +56,7 @@ def dpo_pipeline(config_file_path: str):
             max_seq_length = config['model']['max_seq_length'],
             dtype = config['model']['dtype'],
             load_in_4bit = config['model']['load_in_4bit'],
+            load_in_8bit = config['model']['load_in_8bit'], 
             token = HUGGINGFACE_TOKEN
         )
     elif config['model']['load_in_8bit']:
@@ -63,6 +64,7 @@ def dpo_pipeline(config_file_path: str):
             model_name = config['model']['name'],
             max_seq_length = config['model']['max_seq_length'],
             dtype = config['model']['dtype'],
+            load_in_4bit = config['model']['load_in_4bit'],
             load_in_8bit = config['model']['load_in_8bit'],
             token = HUGGINGFACE_TOKEN
         )
