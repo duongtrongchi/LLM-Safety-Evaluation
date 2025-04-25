@@ -3,17 +3,19 @@ import json
 import torch
 from tqdm import tqdm
 from datetime import datetime
-
+from dotenv import load_dotenv
 from transformers import (
     AutoTokenizer, 
     AutoModelForCausalLM, 
     BitsAndBytesConfig
 )
-
+from huggingface_hub import login
 
 from src.utils import write_to_jsonl, clean_text
 from src.utils import load_yaml_config
 
+load_dotenv()
+login(token=os.getenv("HUGGINGFACE_TOKEN"))
 
 config = load_yaml_config('./configs/evaluation.yaml')
 model_id = config['model']['id']
