@@ -2,13 +2,13 @@ model:
   name: "unsloth/Qwen2.5-1.5B-Instruct"
   max_seq_length: 2048
   dtype: null  
-  load_in_4bit: True
-  load_in_8bit: False
+  load_in_4bit: False
+  load_in_8bit: True
   full_finetuning: False
 
 datasets:
   sources:
-    DuongTrongChi/dpo-unsloth: 0.2 #0.005 # 0.5% sampled
+    DuongTrongChi/dpo-unsloth: 0.005 #0.005 # 0.5% sampled
   splits: ["train"]
   preprocessing:
     num_proc: 2
@@ -40,9 +40,14 @@ training:
   logging_steps: 1
   optim: "adamw_8bit"
   seed: 42
-  output_dir: "outputs"
+  output_dir: "outputs/archive_model"
 
 dpo:
   beta: 0.1
   max_length: 1024
   max_prompt_length: 512
+  huggingface_model_id: DuongTrongChi/temp_model
+  
+
+artifacts:
+  trained_model_path: outputs/trained_model

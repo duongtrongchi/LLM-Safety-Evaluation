@@ -9,7 +9,6 @@ from comet_ml import Experiment
 from unsloth import FastLanguageModel, PatchDPOTrainer
 from unsloth import is_bfloat16_supported
 PatchDPOTrainer()
-from transformers import TrainingArguments
 from trl import DPOTrainer, DPOConfig
 
 
@@ -142,6 +141,10 @@ def dpo_pipeline(config_file_path: str):
     dpo_trainer.train()
 
     experiment.log_model("final_model", config['training']['output_dir'])
+
+    model.save_pretrained_merged(config['artifacts']['trained_model_path'], tokenizer, save_method = "merged_16bit",)
+    model.push_to_hub_merged(config['dpo']['huggingface_model_id'], tokenizer, save_method = "merged_16bit")
+
 
 
 if __name__ == "__main__":
