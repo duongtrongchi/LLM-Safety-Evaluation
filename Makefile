@@ -38,6 +38,8 @@ run-sailor-orpo:
 run-qwen-dpo:
 	poetry run python $(DPO_SCRIPT) --config configs/qwen_dpo_config.yaml
 
+run-sailor-dpo:
+	poetry run python $(DPO_SCRIPT) --config configs/sailor_dpo_config.yaml
 
 run-eval-process:
 	poetry run python $(METRIX_SCRIPT)

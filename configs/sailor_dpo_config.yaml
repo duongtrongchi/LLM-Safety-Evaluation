@@ -1,0 +1,53 @@
+model:
+  name: "sail/Sailor-1.8B-Chat"
+  max_seq_length: 2048
+  dtype: null  
+  load_in_4bit: False
+  load_in_8bit: True
+  full_finetuning: False
+
+datasets:
+  sources:
+    DuongTrongChi/dpo-unsloth: 1 #0.005 # 0.5% sampled
+  splits: ["train"]
+  preprocessing:
+    num_proc: 2
+    # task: "dpo"
+
+lora:
+  r: 128
+  lora_alpha: 64
+  lora_dropout: 0
+  bias: "none"
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  use_gradient_checkpointing: "unsloth"
+  random_state: 3407
+
+training:
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16
+  warmup_ratio: 0.1
+  num_train_epochs: 1
+  fp16: true  # This should be set dynamically based on hardware in code
+  bf16: false # This too
+  logging_steps: 1
+  optim: "adamw_8bit"
+  seed: 42
+  output_dir: "outputs/archive_model"
+
+dpo:
+  beta: 0.1
+  max_length: 1024
+  max_prompt_length: 512
+  huggingface_model_id: DuongTrongChi/sailor-dpo
+  
+
+artifacts:
+  trained_model_path: outputs/trained_model
