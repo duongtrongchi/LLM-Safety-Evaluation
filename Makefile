@@ -34,6 +34,10 @@ run-sailor-orpo:
 	poetry run python $(INFERENCE_SCRIPT) --model_id d-llm/sailor-1.8b-orpo
 
 
+run-sailor-eval-dpo:
+	poetry run python $(INFERENCE_SCRIPT) --model_id DuongTrongChi/sailor-dpo
+
+
 # DPO
 run-qwen-dpo:
 	poetry run python $(DPO_SCRIPT) --config configs/qwen_dpo_config.yaml

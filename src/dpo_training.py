@@ -131,6 +131,7 @@ def dpo_pipeline(config_file_path: str):
             beta = config['dpo']['beta'],
             max_length = config['dpo']['max_length'],
             max_prompt_length = config['dpo']['max_prompt_length'],
+            learning_rate=config['dpo']['learning_rate'],
             report_to="comet_ml"
         ),
         train_dataset = raw_datasets['train'],

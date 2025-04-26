@@ -47,6 +47,7 @@ dpo:
   max_length: 1024
   max_prompt_length: 512
   huggingface_model_id: DuongTrongChi/sailor-dpo
+  learning_rate: 2e-4
   
 
 artifacts:
