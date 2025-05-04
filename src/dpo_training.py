@@ -10,7 +10,7 @@ from unsloth import FastLanguageModel, PatchDPOTrainer
 from unsloth import is_bfloat16_supported
 PatchDPOTrainer()
 from trl import DPOTrainer, DPOConfig
-
+from datasets import load_dataset
 
 from src.processing.data import get_datasets, apply_chat_template
 from src.utils import load_yaml_config
@@ -25,7 +25,7 @@ def dpo_pipeline(config_file_path: str):
     load_dotenv()
     config = load_yaml_config(config_file_path)
     os.environ["CUDA_VISIBLE_DEVICES"] = "0" # Optional set GPU device ID
-    
+
     HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
 
     experiment = Experiment(
@@ -49,14 +49,14 @@ def dpo_pipeline(config_file_path: str):
         raise ValueError("Invalid configuration: Exactly one of [load_in_4bit, load_in_8bit, full_finetuning] must be True.")
 
 
-    # For full-finetuning - set full_finetuning = True  and 8-bit finetuning - set load_in_8bit = True 
+    # For full-finetuning - set full_finetuning = True  and 8-bit finetuning - set load_in_8bit = True
     if config['model']['load_in_4bit']:
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name = config['model']['name'],
             max_seq_length = config['model']['max_seq_length'],
             dtype = config['model']['dtype'],
             load_in_4bit = config['model']['load_in_4bit'],
-            load_in_8bit = config['model']['load_in_8bit'], 
+            load_in_8bit = config['model']['load_in_8bit'],
             token = HUGGINGFACE_TOKEN
         )
     elif config['model']['load_in_8bit']:
@@ -78,27 +78,29 @@ def dpo_pipeline(config_file_path: str):
         )
 
 
-    raw_datasets = get_datasets(
-        config['datasets']['sources'], 
-        splits = config['datasets']['splits'],
-    )
-    column_names = list(raw_datasets["train"].features)
+    # raw_datasets = get_datasets(
+    #     config['datasets']['sources'],
+    #     splits = config['datasets']['splits'],
+    # )
+    # column_names = list(raw_datasets["train"].features)
 
 
-    raw_datasets = raw_datasets.map(
-        apply_chat_template,
-        fn_kwargs = {"tokenizer": tokenizer, "task": "dpo"},
-        num_proc = config['datasets']['preprocessing']['num_proc'],
-        remove_columns = column_names,
-        desc = "Formatting comparisons with prompt template",
-    )
+    # raw_datasets = raw_datasets.map(
+    #     apply_chat_template,
+    #     fn_kwargs = {"tokenizer": tokenizer, "task": "dpo"},
+    #     num_proc = config['datasets']['preprocessing']['num_proc'],
+    #     remove_columns = column_names,
+    #     desc = "Formatting comparisons with prompt template",
+    # )
 
-    # # Replace column names with what TRL needs, text_chosen -> chosen and text_rejected -> rejected
-    for split in config['datasets']['splits']:
-        raw_datasets[split] = raw_datasets[split].rename_columns(
-            {"text_prompt": "prompt", "text_chosen": "chosen", "text_rejected": "rejected"}
-        )
+    # # # Replace column names with what TRL needs, text_chosen -> chosen and text_rejected -> rejected
+    # for split in config['datasets']['splits']:
+    #     raw_datasets[split] = raw_datasets[split].rename_columns(
+    #         {"text_prompt": "prompt", "text_chosen": "chosen", "text_rejected": "rejected"}
+    #     )
 
+    train_dataset = load_dataset("json", data_files="./train_dataset.json", split="train")
+    eval_dataset = load_dataset("json", data_files="./test_dataset.json", split="train")
 
     # Do model patching and add fast LoRA weights
     model = FastLanguageModel.get_peft_model(
@@ -134,13 +136,13 @@ def dpo_pipeline(config_file_path: str):
             learning_rate=float(config['dpo']['learning_rate']),
             report_to="comet_ml"
         ),
-        train_dataset = raw_datasets['train'],
-        # eval_dataset = YOUR_DATASET_HERE,
+        train_dataset = train_dataset,
+        eval_dataset = eval_dataset,
         tokenizer = tokenizer,
 
     )
 
- 
+
     dpo_trainer.train()
 
     experiment.log_model("final_model", config['training']['output_dir'])
