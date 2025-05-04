@@ -99,8 +99,8 @@ def dpo_pipeline(config_file_path: str):
     #         {"text_prompt": "prompt", "text_chosen": "chosen", "text_rejected": "rejected"}
     #     )
 
-    train_dataset = load_dataset("json", data_files="./train_dataset.json", split="train")
-    eval_dataset = load_dataset("json", data_files="./test_dataset.json", split="train")
+    train_dataset = load_dataset("json", data_files="./data/train_dataset.json", split="train")
+    eval_dataset = load_dataset("json", data_files="./data/test_dataset.json", split="train")
 
     # Do model patching and add fast LoRA weights
     model = FastLanguageModel.get_peft_model(
