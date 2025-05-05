@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
 
     ds = load_dataset(DATASET_ID, token=HUGGINGFACE_TOKEN, split="train") #.select(range(10))
-    model = UnslothModel(model_id=args.model_id, max_seq_length=2048, device="cuda")
+    # model = UnslothModel(model_id=args.model_id, max_seq_length=2048, device="cuda")
     file_name = args.model_id.split('/')[-1] + " " + datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
 
