@@ -33,6 +33,8 @@ run-qwen-orpo:
 run-sailor-orpo:
 	poetry run python $(INFERENCE_SCRIPT) --model_id d-llm/sailor-1.8b-orpo
 
+run-vinallama-dpo-infer:
+	poetry run python $(INFERENCE_SCRIPT) --model_id DuongTrongChi/vinallama-dpo
 
 run-sailor-eval-dpo:
 	poetry run python $(INFERENCE_SCRIPT) --model_id DuongTrongChi/sailor-dpo
